@@ -1,0 +1,27 @@
+Go notes:
+
+golang中根据首字母的大小写来确定可以访问的权限。无论是方法名、常量、变量名还是结构体的名称，如果首字母大写，则可以被其他的包访问；如果首字母小写，则只能在本包中使用
+
+结构体中属性名的大写
+如果属性名小写则在数据解析（如json解析,或将结构体作为请求或访问参数）时无法解析
+type User struct {
+        name string
+        age  int
+ }
+func main() {
+         user:=User{"Tom",18}
+         if userJSON,err:=json.Marshal(user);err==nil{
+       　　  fmt.Println(string(userJSON))   //数据无法解析
+        }
+}
+
+Go查找包的时候是根据文件夹名查找模块
+
+在 Go 语言中 interface resolution 是隐式的。如果传入的类型匹配接口需要的，则编译正确。
+e.g.
+type Shape interface {
+    Area() float64
+}
+Rectangle 有一个返回值类型为 float64 的方法 Area，所以它满足接口 Shape
+Circle 有一个返回值类型为 float64 的方法 Area，所以它满足接口 Shape
+string 没有这种方法，所以它不满足这个接口

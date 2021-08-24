@@ -1,0 +1,24 @@
+Go环境配置:
+系统变量-GOROOT-Go SDK的安装路径
+		-GOPATH-存放go文件的工作区
+		-path-新建-%GOROOT%\bin
+(对应  ‘go’ 不是内部或外部命令，也不是可运行的程序或批处理文件。 的情况)
+		
+测试:
+go env
+go version
+
+Directory structure:
+%GOPATH%-src
+		-pkg
+		-bin
+
+Test drive:
+// hello.go 
+package main
+
+import "fmt"
+func main() {
+      fmt.Println("Hello, GO !")
+}
+// go run hello.go
