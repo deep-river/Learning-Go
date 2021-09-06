@@ -1,0 +1,3 @@
+cd project_dir
+go mod init project_name
+go get package_name
