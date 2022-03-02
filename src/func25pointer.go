@@ -12,6 +12,7 @@ func zeroval(ival int) {
 
 func zeroptr(iptr *int) {
 	// Function takes an int pointer, then DEREFERENCES the pointer from its memory address to the current value at that address. Assigning a value to a deferenced pointer changes the value at the referenced address.
+	// *ADDRESS: dereference ADDRESS
 	*iptr = 0
 }
 
@@ -24,6 +25,6 @@ func main() {
 
 	zeroptr(&i)
 	fmt.Println("zeroptr: ", i)
-
+	// &VAR: get VAR's address
 	fmt.Println("pointer: ", &i)
 }
