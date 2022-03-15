@@ -201,18 +201,58 @@ CAS
         P2修改数值A为数值B，然后又修改回A
         P1被唤醒，比较后发现数值A没有变化，程序继续执行。
 
+RPC
+    远程过程调用（Remote Procedure Call，缩写为 RPC）是一个计算机通信协议。RPC允许跨机器、跨语言调用计算机程序方法。
+
+    golang官方的net/rpc库使用encoding/gob进行编解码，支持tcp和http数据传输方式，由于其他语言不支持gob编解码方式，所以golang的RPC只支持golang开发的服务器与客户端之间的交互
+
+    官方还提供了net/rpc/jsonrpc库实现RPC方法，jsonrpc采用JSON进行数据编解码，因而支持跨语言调用，目前jsonrpc库是基于tcp协议实现的，暂不支持http传输方式
+
+    golang写RPC程序，必须符合4个基本条件
+        结构体字段首字母要大写，可以别人调用
+        函数名必须首字母大写
+        函数第一参数是接收参数，第二个参数是返回给客户端的参数，必须是指针类型
+        函数还必须有一个返回值error
+
 Raft
-    Raft是一个分布式的一致性协议算法，通过选主机制和日志状态机模型来保证分布式系统的数据强一致性。
+    Raft是一个分布式的一致性协议算法，通过 选主机制 和 日志状态机模型 来保证分布式系统的数据强一致性。
 
     在Raft协议里，系统中的所有节点中必须选出一个Leader。
     为什么要有leader?
         因为分布式的数据分区特性，如果没有Leader来协调数据处理，就很难保证数据是一致的了。
         如果没有Leader，则系统的每次操作都要进行一次投票，开销非常大。Paxos算法也是一个分布式一致性协议，使用P2P算法来保证，但是实际理解和实现都过于复杂。如果有一个leader会让决策变得简单快速。
 
-    Raft普通节点和Leader之间都有心跳，一有异常(timeout)就发起重新选举。得到大多数投票的节点将成为新的Leader
-
+    Raft 集群中每个节点都处于以下三种角色之一：
+        Leader: 所有请求的处理者，接收客户端发起的操作请求，写入本地日志后同步至集群其它节点。
+        Follower: 请求的被动更新者，从 leader 接收更新请求，写入本地文件。如果客户端的操作请求发送给了 follower，会首先由 follower 重定向给 leader。
+        Candidate: 如果 follower 在一定时间内没有收到 leader 的心跳，则判断 leader 可能已经故障，此时启动 leader election 过程，本节点切换为 candidate 直到选主结束。
 
     分布式要保证可用性，往往意味着多副本存储，且各副本节点的数据一致；Raft维持多副本数据一致的方式是使用日志状态机。
     日志状态机通过二元组(index,term)来作为日志状态向量。
         index是连续递增的数字，是日志的逻辑序号，各个副本上相同的index，有相同的数据日志。
         term任期也是连续递增的数字，如上面解释的那样，一个term则表示某个节点当选的一段时间。
+
+    Leader election (领导选举)
+        Raft 使用一种心跳机制来触发领导人选举:
+        1. 当服务器程序启动时，节点都是 follower(跟随者) 身份
+        2. 如果一个跟随者在一段时间里没有接收到任何消息，也就是选举超时，然后他就会认为系统中没有可用的领导者然后开始进行选举以选出新的领导者
+        3. 要开始一次选举过程，follower 会给当前term加1并且转换成candidate状态，然后它会并行的向集群中的其他服务器节点发送请求投票的 RPCs 来给自己投票。
+        4. 候选人的状态维持直到发生以下任何一个条件发生的时候
+            1. 他自己赢得了这次的选举
+            2. 其他的服务器成为领导者
+            3. 一段时间之后没有任何一个获胜的人
+
+    Log replication (日志复制)
+        当选出 leader 后，它会开始接收客户端请求，每个请求会带有一个指令，可以被回放到状态机中
+        leader 把指令追加成一个log entry，然后通过AppendEntries RPC并行地发送给其他的server，当该entry被多数server复制后，leader 会把该entry回放到状态机中，然后把结果返回给客户端
+        当 follower 宕机或者运行较慢时，leader 会无限地重发AppendEntries给这些follower，直到所有的follower都复制了该log entry
+        raft的log replication要保证如果两个log entry有相同的index和term，那么它们存储相同的指令
+        leader在一个特定的term和index下，只会创建一个log entry
+
+    Raft系统采用RPC心跳来通信,主要有两种类型的RPC：
+
+        AppendEntries:
+        用于Leader向其他Follower同步日志数据
+        维护和Followers的心跳
+
+        RequestVote：Candidate调用的请求用于获取投票
