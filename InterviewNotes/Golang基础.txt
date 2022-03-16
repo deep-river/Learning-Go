@@ -1,3 +1,82 @@
+什么是面向对象
+    在了解 Go 语言是不是面向对象（简称：OOP） 之前，我们必须先知道 OOP 是啥，得先给他 “下定义”。
+
+    根据 Wikipedia 的定义，我们梳理出 OOP 的几个基本认知：
+        面向对象编程（OOP）是一种基于 "对象" 概念的编程范式，它可以包含数据和代码：数据以字段的形式存在（通常称为属性或属性），代码以程序的形式存在（通常称为方法）。
+        对象自己的程序可以访问并经常修改自己的数据字段。
+        对象经常被定义为类的一个实例。
+        对象利用属性和方法的私有/受保护/公共可见性，对象的内部状态受到保护，不受外界影响（被封装）。
+
+    基于这几个基本认知进行一步延伸出，面向对象的三大基本特性：
+        封装。
+        继承。
+        多态。
+
+
+Golang 面向对象编程
+    go语言中，虽然没有明确提出面向对象的概念，但是基于已有的语法设计，我们也可以写出面向对象的代码。go语言中的面向对象是借助struct结构体实现的。值得一提的是，go语言中虽然没有class关键字来表示类，但却有interface来表示接口。
+
+    封装
+        面向对象中的 “封装” 指的是可以隐藏对象的内部属性和实现细节，仅对外提供公开接口调用，这样子用户就不需要关注你内部是怎么实现的。
+
+        在 Go 语言中的属性访问权限，通过首字母大小写来控制：
+            首字母大写，代表是公共的、可被外部访问的。
+            首字母小写，代表是私有的，不可以被外部访问。
+
+    继承
+        在 Go 语言中，是没有类似 extends 关键字的这种继承的方式，在语言设计上采取的是组合的方式：
+            type Animal struct {
+            Name string
+            }
+
+            type Cat struct {
+            Animal
+            FeatureA string
+            }
+
+            type Dog struct {
+            Animal
+            FeatureB string
+            }
+        在上述例子中，我们声明了 Cat 和 Dog 结构体，其在内部匿名组合了 Animal 结构体。因此 Cat 和 Dog 的实例都可以调用 Animal 结构体的方法：
+
+    多态 
+        面向对象中的 “多态” 指的同一个行为具有多种不同表现形式或形态的能力，具体是指一个类实例（对象）的相同方法在不同情形有不同表现形式。
+        多态也使得不同内部结构的对象可以共享相同的外部接口，也就是都是一套外部模板，内部实际是什么，只要符合规格就可以。
+        在 Go 语言中，多态是通过接口来实现的：结构体中只要有和接口中定义的同名方法，就称该结构体是实现了哪个接口。
+
+            type AnimalSounder interface {
+            MakeDNA()
+            }
+
+            func MakeSomeDNA(animalSounder AnimalSounder) {
+            animalSounder.MakeDNA()
+            }
+        在上述例子中，我们声明了一个接口类型 AnimalSounder，配套一个 MakeSomeDNA 方法，其接受 AnimalSounder 接口类型作为入参。
+
+        因此在 Go 语言中。只要配套的 Cat 和 Dog 的实例也实现了 MakeSomeDNA 方法，那么我们就可以认为他是 AnimalSounder 接口类型：
+
+            type AnimalSounder interface {
+            MakeDNA()
+            }
+
+            func MakeSomeDNA(animalSounder AnimalSounder) {
+            animalSounder.MakeDNA()
+            }
+
+            func (c *Cat) MakeDNA() {
+            fmt.Println("煎鱼是煎鱼")
+            }
+
+            func (c *Dog) MakeDNA() {
+            fmt.Println("煎鱼其实不是煎鱼")
+            }
+
+            func main() {
+            MakeSomeDNA(&Cat{})
+            MakeSomeDNA(&Dog{})
+            }
+        当 Cat 和 Dog 的实例实现了 AnimalSounder 接口类型的约束后，就意味着满足了条件，他们在 Go 语言中就是一个东西。能够作为入参传入 MakeSomeDNA 方法中，再根据不同的实例实现多态行为。
 
 传参
     在Go语言中有五个引用类型变量,其他都是值类型
